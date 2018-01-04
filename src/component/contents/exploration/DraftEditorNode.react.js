@@ -122,6 +122,7 @@ class DraftEditorNode extends React.Component<Props> {
           'public/DraftStyleDefault/block': true,
           'public/DraftStyleDefault/ltr': direction === 'LTR',
           'public/DraftStyleDefault/rtl': direction === 'RTL',
+          [direction]: direction !== 'LTR' && direction !== 'RTL',
         })}>
         {children}
       </div>
