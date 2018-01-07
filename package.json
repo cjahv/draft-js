@@ -1,7 +1,7 @@
 {
   "name": "draft-js",
   "description": "A React framework for building text editors.",
-  "version": "0.10.4",
+  "version": "0.101.0",
   "keywords": [
     "draftjs",
     "editor",
@@ -20,6 +20,9 @@
   "style": "dist/Draft.css",
   "repository": "facebook/draft-js",
   "license": "BSD-3-Clause",
+  "publishConfig": {
+    "registry": "http://maven.cqoak.ml/repository/oak-npm/"
+  },
   "scripts": {
     "prepublish": "npm run build",
     "pretest": "node node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
