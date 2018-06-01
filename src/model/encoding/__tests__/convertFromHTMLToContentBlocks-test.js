@@ -19,6 +19,7 @@ jest.mock('generateRandomKey');
 const DefaultDraftBlockRenderMap = require('DefaultDraftBlockRenderMap');
 
 const convertFromHTMLToContentBlocks = require('convertFromHTMLToContentBlocks');
+const cx = require('cx');
 const getSafeBodyFromHTML = require('getSafeBodyFromHTML');
 
 const DEFAULT_CONFIG = {
@@ -58,10 +59,8 @@ const normalizeBlock = block => {
 };
 
 const toggleExperimentalTreeDataSupport = enabled => {
-  jest.doMock('DraftFeatureFlags', () => {
-    return {
-      draft_tree_data_support: enabled,
-    };
+  jest.doMock('gkx', () => name => {
+    return name === 'draft_tree_data_support' ? enabled : false;
   });
 };
 
@@ -263,6 +262,56 @@ test('Should not create empty container blocks around ol and their list items wh
     <ol>
       <li>something</li>
     </ol>
+  `;
+  assertConvertFromHTMLToContentBlocks(html_string, {
+    experimentalTreeDataSupport: true,
+  });
+});
+
+test('Should preserve entities for whitespace-only content', () => {
+  const html_string = `
+    <a href="http://www.facebook.com">
+      <b>before</b> <b>after</b>
+    </a>
+  `;
+  assertConvertFromHTMLToContentBlocks(html_string, {
+    experimentalTreeDataSupport: false,
+  });
+});
+
+test('Should import recognised draft li depths', () => {
+  const html_string = `
+    <ul>
+      <li class="${cx('public/DraftStyleDefault/depth0')}">depth0</li>
+      <li class="${cx('public/DraftStyleDefault/depth1')}">depth1</li>
+      <li class="${cx('public/DraftStyleDefault/depth2')}">depth2</li>
+      <li class="${cx('public/DraftStyleDefault/depth3')}">depth3</li>
+      <li class="${cx('public/DraftStyleDefault/depth4')}">depth4</li>
+    </ul>
+  `;
+  assertConvertFromHTMLToContentBlocks(html_string, {
+    experimentalTreeDataSupport: false,
+  });
+});
+
+test('Should import recognised draft li depths when nesting enabled', () => {
+  const html_string = `
+    <ul>
+      <li class="${cx('public/DraftStyleDefault/depth0')}">depth0</li>
+      <li class="${cx('public/DraftStyleDefault/depth1')}">depth1</li>
+      <li class="${cx('public/DraftStyleDefault/depth2')}">depth2</li>
+      <li class="${cx('public/DraftStyleDefault/depth3')}">depth3</li>
+      <li class="${cx('public/DraftStyleDefault/depth4')}">depth4</li>
+    </ul>
+  `;
+  assertConvertFromHTMLToContentBlocks(html_string, {
+    experimentalTreeDataSupport: true,
+  });
+});
+
+test('Should preserve spacing around inline tags', () => {
+  const html_string = `
+    <span>Some<span> </span></span><i>stylised</i><span><span> </span></span><b>text</b>
   `;
   assertConvertFromHTMLToContentBlocks(html_string, {
     experimentalTreeDataSupport: true,

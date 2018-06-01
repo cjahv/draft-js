@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  *
- * @providesModule convertFromHTMLToContentBlocks
  * @format
  * @flow
  */
@@ -25,17 +24,18 @@ const ContentBlock = require('ContentBlock');
 const ContentBlockNode = require('ContentBlockNode');
 const DefaultDraftBlockRenderMap = require('DefaultDraftBlockRenderMap');
 const DraftEntity = require('DraftEntity');
-const DraftFeatureFlags = require('DraftFeatureFlags');
 const Immutable = require('immutable');
 const {Set} = require('immutable');
 const URI = require('URI');
 
+const cx = require('cx');
 const generateRandomKey = require('generateRandomKey');
 const getSafeBodyFromHTML = require('getSafeBodyFromHTML');
+const gkx = require('gkx');
 const invariant = require('invariant');
 const sanitizeDraftText = require('sanitizeDraftText');
 
-const experimentalTreeDataSupport = DraftFeatureFlags.draft_tree_data_support;
+const experimentalTreeDataSupport = gkx('draft_tree_data_support');
 
 type Block = {
   type: DraftBlockType,
@@ -82,6 +82,14 @@ const inlineTags = {
   strike: 'STRIKETHROUGH',
   strong: 'BOLD',
   u: 'UNDERLINE',
+};
+
+const knownListItemDepthClasses = {
+  [cx('public/DraftStyleDefault/depth0')]: 0,
+  [cx('public/DraftStyleDefault/depth1')]: 1,
+  [cx('public/DraftStyleDefault/depth2')]: 2,
+  [cx('public/DraftStyleDefault/depth3')]: 3,
+  [cx('public/DraftStyleDefault/depth4')]: 4,
 };
 
 const anchorAttr = ['className', 'href', 'rel', 'target', 'title'];
@@ -285,11 +293,15 @@ const hasValidLinkText = (link: Node): boolean => {
 };
 
 const getWhitespaceChunk = (inEntity: ?string): Chunk => {
+  const entities = new Array(1);
+  if (inEntity) {
+    entities[0] = inEntity;
+  }
   return {
     ...EMPTY_CHUNK,
     text: SPACE,
     inlines: [OrderedSet()],
-    entities: new Array(1).map(none => (inEntity ? inEntity : none)),
+    entities,
   };
 };
 
@@ -327,6 +339,19 @@ const getBlockDividerChunk = (
       }),
     ],
   };
+};
+
+/**
+ *  If we're pasting from one DraftEditor to another we can check to see if
+ *  existing list item depth classes are being used and preserve this style
+ */
+const getListItemDepth = (node: HTMLElement, depth: number = 0): number => {
+  Object.keys(knownListItemDepthClasses).some(depthClass => {
+    if (node.classList.contains(depthClass)) {
+      depth = knownListItemDepthClasses[depthClass];
+    }
+  });
+  return depth;
 };
 
 const genFragment = (
@@ -438,6 +463,14 @@ const genFragment = (
       depth += 1;
     }
     lastList = nodeName;
+  }
+
+  if (
+    !experimentalTreeDataSupport &&
+    nodeName === 'li' &&
+    node instanceof HTMLElement
+  ) {
+    depth = getListItemDepth(node, depth);
   }
 
   const blockType = getBlockTypeForTag(nodeName, lastList, blockRenderMap);
