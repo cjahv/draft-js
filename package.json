@@ -1,7 +1,7 @@
 {
-  "name": "draft-js",
+  "name": "@oak/draft-js",
   "description": "A React framework for building text editors.",
-  "version": "0.101.3",
+  "version": "0.10.3",
   "keywords": [
     "draftjs",
     "editor",
@@ -13,15 +13,17 @@
   "files": [
     "dist/",
     "lib/",
+    "index.d.ts",
     "LICENSE",
     "PATENTS"
   ],
   "main": "lib/Draft.js",
   "style": "dist/Draft.css",
+  "typings": "./index.d.ts",
   "repository": "facebook/draft-js",
   "license": "BSD-3-Clause",
   "publishConfig": {
-    "registry": "http://maven.oakhit.com/repository/oak-npm/"
+    "registry": "http://10.0.0.246:9004"
   },
   "scripts": {
     "prepublish": "npm run build",
